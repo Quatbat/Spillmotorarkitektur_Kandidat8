@@ -1,5 +1,6 @@
 #include "EksamensApp.h"
 #include "player.h"
+#include "gamecamera.h"
 #include "enemy.h"
 
 //-------------------------------------------------------------------------------------
@@ -29,7 +30,7 @@ void EksamensApp::createScene(void)
 
     player = new Player("pingu", mSceneMgr);
     enemy = new Enemy("shrek", mSceneMgr);
- 
+
     // Create the player
     Ogre::Entity* ogreHead = mSceneMgr->createEntity("Head", "penguin.mesh");
     ogreHead->setCastShadows(true);
@@ -58,7 +59,7 @@ void EksamensApp::createScene(void)
     mGoalNode->attachObject(mEntGoal);
     mGoalNode->scale(0.1f, 0.1f, 0.1f);
     mGoalNode->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(-90));
- 
+
     // Create a Light and set its position
     Ogre::Light* light = mSceneMgr->createLight("MainLight");
     light->setPosition(2.0f, 25.0f, 22.0f);
@@ -115,7 +116,8 @@ void EksamensApp::createScene(void)
 
 }
 
-bool EksamensApp::nextLocation(){
+bool EksamensApp::nextLocation()
+{
     if (mWalkList.empty()) return false;
     mDestination = mWalkList[mListIterator];  // this gets a position from the list
     mDirection = mDestination - mEnemyNode->getPosition();
@@ -128,9 +130,20 @@ bool EksamensApp::nextLocation(){
 bool EksamensApp::keyPressed(const OIS::KeyEvent &arg)
 {
     player->keyPress(arg);
+    //gameCam->keyPress(arg);
 
     switch (arg.key)
-    {
+    {/*
+    case OIS::KC_1:
+        gameCam->camMode = 0;
+        break;
+    case OIS::KC_2:
+        gameCam->camMode = 1;
+        break;
+    case OIS::KC_3:
+        gameCam->camMode = 2;
+        break;*/
+
     case OIS::KC_ESCAPE:
         mShutDown = true;
         break;
@@ -169,6 +182,7 @@ bool EksamensApp::keyPressed(const OIS::KeyEvent &arg)
 bool EksamensApp::keyReleased(const OIS::KeyEvent &arg)
 {
     player->keyRelease(arg);
+    //gameCam->keyRelease(arg);
 
     switch (arg.key)
     {
@@ -195,10 +209,12 @@ bool EksamensApp::keyReleased(const OIS::KeyEvent &arg)
 
 bool EksamensApp::mouseMoved(const OIS::MouseEvent &arg)
 {
+    //gameCam->mouseMoved(arg, mDeltaTime);
     return true;
 }
 
-void EksamensApp::createFrameListener(void){
+void EksamensApp::createFrameListener(void)
+{
     OgreFramework::createFrameListener();
     mEnemyWalkSpeed = 45.0f;
     mPlayerWalkSpeed = 20.0f;
@@ -212,7 +228,18 @@ bool EksamensApp::frameStarted(const Ogre::FrameEvent &evt)
 }
 
 void EksamensApp::createCamera(void)
-{
+{/*
+    mCamera = mSceneMgr->createCamera("PlayerCam");
+    gameCam = new GameCamera(mCamera, mSceneMgr);
+
+    mViewport = mRoot->getAutoCreatedWindow()->addViewport(gameCam->camera,-1);
+    gameCam->camera->setAspectRatio(Ogre::Real(mViewport->getActualWidth())/
+                                     Ogre::Real(mViewport->getActualHeight()));
+    mViewport->setBackgroundColour(Ogre::ColourValue(.5f,.5f,.5f));
+*/
+    //gameCam->camMode = 0;
+
+
     // create the camera
     mCamera = mSceneMgr->createCamera("PlayerCam");
     // set its position, direction
@@ -223,40 +250,51 @@ void EksamensApp::createCamera(void)
 
     // the rest is set up by default Sdk config
     mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
+
 }
 
 bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt)
 {
     player->update(evt);
+
+    mDeltaTime = evt.timeSinceLastFrame;
+
     //update player
     Ogre::Real playerMove = mPlayerWalkSpeed * evt.timeSinceLastFrame;
     mAnimationState->addTime(evt.timeSinceLastFrame);
 
     //update enemy
-    if (mDirection == Ogre::Vector3::ZERO) {
+    if (mDirection == Ogre::Vector3::ZERO)
         nextLocation();
-    }else{
+    else
+    {
         Ogre::Real enemyMove = mEnemyWalkSpeed * evt.timeSinceLastFrame;
         mDistance -= enemyMove;
-        if (mDistance <= 0.0f){
+        if (mDistance <= 0.0f)
+        {
             mEnemyNode->setPosition(mDestination);
             mDirection = Ogre::Vector3::ZERO;
-            if (nextLocation()){
+            if (nextLocation())
+            {
                 // Correct Rotation Code will go here later
                 Ogre::Vector3 src = mEnemyNode->getOrientation() * Ogre::Vector3::UNIT_X;
-                if ((1.0f + src.dotProduct(mDirection)) < 0.0001f) {
+
+                if ((1.0f + src.dotProduct(mDirection)) < 0.0001f)
                     mEnemyNode->yaw(Ogre::Degree(180));
-                }else{
+
+                else
+                {
                     Ogre::Quaternion quat = src.getRotationTo(mDirection);
                     mEnemyNode->rotate(quat);
                 } // else
             }//if
-        }else{
+        }
+
+        else
             mEnemyNode->translate(mDirection * enemyMove);
-        } // else
     } // else
 
-
+/*
     //Move player
     if (forward)
         playerNode->translate(0.0, 0.0, -1.0 * playerMove);
@@ -266,10 +304,18 @@ bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt)
         playerNode->translate(-1.0 * playerMove, 0.0, 0.0);
     if (right)
         playerNode->translate(1.0 * playerMove, 0.0, 0.0);
-
+*/
     //update camera
-    mCamera->lookAt(playerNode->getPosition());
-
+    //mCamera->lookAt(playerNode->getPosition());
+    mCamera->lookAt(player->mainNode->getPosition());
+/*
+    gameCam->update(mDeltaTime,
+        player->getCameraNode()->_getDerivedPosition(),
+        player->getSightNode()->_getDerivedPosition());
+    gameCam->camNode->setAutoTracking(true, gameCam->targetNode);
+    gameCam->attachCamera();
+    //player->setVisible(true);
+    gameCam->setTightness(.05f);*/
 
     //Collisions
 
@@ -346,48 +392,3 @@ bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt)
 
     return OgreFramework::frameRenderingQueued(evt);
 }
-
-
-/*
- *
- *Just the main function of the program
- *
- *
- */
-
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-    INT WINAPI WinMain( HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT )
-#else
-    int main(int argc, char *argv[])
-#endif
-    {
-        // Create application object
-        EksamensApp app;
-
-        try {
-            app.go();
-        } catch( Ogre::Exception& e ) {
-#if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-            MessageBox( NULL, e.getFullDescription().c_str(), "An exception has occured!", MB_OK | MB_ICONERROR | MB_TASKMODAL);
-#else
-            std::cerr << "An exception has occured: " <<
-                e.getFullDescription().c_str() << std::endl;
-#endif
-        }
-
-        return 0;
-    }
-
-#ifdef __cplusplus
-}
-#endif

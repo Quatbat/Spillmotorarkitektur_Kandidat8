@@ -29,10 +29,15 @@ SOURCES += \
     src/EksamensApp.cpp \
     src/OgreFramework.cpp \
     src/player.cpp \
-    src/enemy.cpp
+    src/enemy.cpp \
+    src/gamecamera.cpp \
+    src/main.cpp \
+    src/playerstatus.cpp
 
 HEADERS += \
     include/EksamensApp.h \
     include/OgreFramework.h \
     include/player.h \
-    include/enemy.h
+    include/enemy.h \
+    include/gamecamera.h \
+    include/playerstatus.h

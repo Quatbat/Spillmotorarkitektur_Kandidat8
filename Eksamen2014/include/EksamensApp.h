@@ -4,6 +4,7 @@
 #include "OgreFramework.h"
 
 class Player;
+class GameCamera;
 class Enemy;
 
 class EksamensApp : public OgreFramework
@@ -21,7 +22,11 @@ protected:
     virtual bool mouseMoved( const OIS::MouseEvent &arg );
 
     Player* player;
+    GameCamera* gameCam;
     Enemy* enemy;
+
+    Ogre::Real mDeltaTime;
+    Ogre::Viewport* mViewport;
 
     Ogre::Real mDistance;
     Ogre::Vector3 mDirection;
@@ -37,6 +42,7 @@ protected:
     Ogre::SceneNode* mPickupNode2;
     Ogre::SceneNode* mPickupNode3;
     Ogre::SceneNode* mPickupNode4;
+
     int mPickups;
 
     Ogre::AnimationState *mAnimationState;
