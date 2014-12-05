@@ -3,6 +3,9 @@
 
 #include "OgreFramework.h"
 
+class Player;
+class Enemy;
+
 class EksamensApp : public OgreFramework
 {
 public:
@@ -16,6 +19,9 @@ protected:
     virtual bool keyPressed( const OIS::KeyEvent &arg );
     virtual bool keyReleased( const OIS::KeyEvent &arg );
     virtual bool mouseMoved( const OIS::MouseEvent &arg );
+
+    Player* player;
+    Enemy* enemy;
 
     Ogre::Real mDistance;
     Ogre::Vector3 mDirection;
@@ -38,6 +44,7 @@ protected:
     Ogre::ParticleSystem* mWinParticles;
 
     void createFrameListener();
+    bool frameStarted(const Ogre::FrameEvent &evt);
     bool frameRenderingQueued(const Ogre::FrameEvent &evt);
 
     //walk parameters

@@ -1,4 +1,6 @@
 #include "EksamensApp.h"
+#include "player.h"
+#include "enemy.h"
 
 //-------------------------------------------------------------------------------------
 EksamensApp::EksamensApp(void)
@@ -12,19 +14,21 @@ EksamensApp::EksamensApp(void)
 //-------------------------------------------------------------------------------------
 EksamensApp::~EksamensApp(void)
 {
+    delete player;
+    delete enemy;
 }
 
 //-------------------------------------------------------------------------------------
 void EksamensApp::createScene(void)
 {
-    // creating the scene here.
-
-	// Set the scene's ambient light
     mSceneMgr->setAmbientLight(Ogre::ColourValue(0.4f, 0.4f, 0.4f));
     mSceneMgr->setShadowTechnique(Ogre::SHADOWTYPE_TEXTURE_ADDITIVE);
 
     //Skybox
     mSceneMgr->setSkyBox(true, "Examples/SpaceSkyBox", 500, false);
+
+    player = new Player("pingu", mSceneMgr);
+    enemy = new Enemy("shrek", mSceneMgr);
  
     // Create the player
     Ogre::Entity* ogreHead = mSceneMgr->createEntity("Head", "penguin.mesh");
@@ -123,6 +127,8 @@ bool EksamensApp::nextLocation(){
 
 bool EksamensApp::keyPressed(const OIS::KeyEvent &arg)
 {
+    player->keyPress(arg);
+
     switch (arg.key)
     {
     case OIS::KC_ESCAPE:
@@ -162,6 +168,8 @@ bool EksamensApp::keyPressed(const OIS::KeyEvent &arg)
 
 bool EksamensApp::keyReleased(const OIS::KeyEvent &arg)
 {
+    player->keyRelease(arg);
+
     switch (arg.key)
     {
     case OIS::KC_UP:
@@ -197,6 +205,12 @@ void EksamensApp::createFrameListener(void){
     mDirection = Ogre::Vector3::ZERO;
 }
 
+bool EksamensApp::frameStarted(const Ogre::FrameEvent &evt)
+{
+    player->render(evt);
+    return true;
+}
+
 void EksamensApp::createCamera(void)
 {
     // create the camera
@@ -211,8 +225,9 @@ void EksamensApp::createCamera(void)
     mCameraMan = new OgreBites::SdkCameraMan(mCamera);   // create a default camera controller
 }
 
-bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt){
-
+bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt)
+{
+    player->update(evt);
     //update player
     Ogre::Real playerMove = mPlayerWalkSpeed * evt.timeSinceLastFrame;
     mAnimationState->addTime(evt.timeSinceLastFrame);
