@@ -31,22 +31,9 @@ void EksamensApp::createScene(void)
     player = new Player("pingu", mSceneMgr);
     enemy = new Enemy("shrek", mSceneMgr);
 
-    // Create the player
-    Ogre::Entity* ogreHead = mSceneMgr->createEntity("Head", "penguin.mesh");
-    ogreHead->setCastShadows(true);
-    // Create a SceneNode and attach the Entity to it
-    playerNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("HeadNode", Ogre::Vector3(-40.0f, 5.0f, 0.0f));
-    playerNode->attachObject(ogreHead);
-    playerNode->scale(0.2f, 0.2f, 0.2f);
-    playerNode->rotate(Ogre::Vector3::UNIT_Y, Ogre::Degree(90));
-    // Set walking animation
-    mAnimationState = ogreHead->getAnimationState("amuse");
-    mAnimationState->setLoop(true);
-    mAnimationState->setEnabled(true);
-
 
     // Create the enemy
-    Ogre::Entity* mEntEnemy = mSceneMgr->createEntity("Enemy", "ogrehead.mesh");
+    Ogre::Entity* mEntEnemy = mSceneMgr->createEntity("shrek", "ogrehead.mesh");
     mEnemyNode = mSceneMgr->getRootSceneNode()->
             createChildSceneNode("RobotNode", Ogre::Vector3(0.0f, 2.0f, 0.0f));
     mEnemyNode->attachObject(mEntEnemy);
@@ -173,6 +160,11 @@ bool EksamensApp::keyPressed(const OIS::KeyEvent &arg)
             mSceneMgr->setAmbientLight(Ogre::ColourValue(0.4f, 0.4f, 0.4f));
         }
         break;
+
+    case OIS::KC_R:
+        if (player->lost)
+            return 0; //egentlig reset, ikkje tid.
+        break;
     default:
         OgreFramework::keyPressed(arg);
     }
@@ -294,101 +286,9 @@ bool EksamensApp::frameRenderingQueued(const Ogre::FrameEvent &evt)
             mEnemyNode->translate(mDirection * enemyMove);
     } // else
 
-/*
-    //Move player
-    if (forward)
-        playerNode->translate(0.0, 0.0, -1.0 * playerMove);
-    if (backwards)
-        playerNode->translate(0.0, 0.0, 1.0 * playerMove);
-    if (left)
-        playerNode->translate(-1.0 * playerMove, 0.0, 0.0);
-    if (right)
-        playerNode->translate(1.0 * playerMove, 0.0, 0.0);
-*/
     //update camera
-    //mCamera->lookAt(playerNode->getPosition());
     mCamera->lookAt(player->mainNode->getPosition());
-/*
-    gameCam->update(mDeltaTime,
-        player->getCameraNode()->_getDerivedPosition(),
-        player->getSightNode()->_getDerivedPosition());
-    gameCam->camNode->setAutoTracking(true, gameCam->targetNode);
-    gameCam->attachCamera();
-    //player->setVisible(true);
-    gameCam->setTightness(.05f);*/
 
-    //Collisions
-
-    //fall down
-    if (playerNode->getPosition().z < -25){
-        playerNode->translate(0.0, -2.0 * playerMove, 0.0);
-    }
-    if (playerNode->getPosition().z > 25) {
-        playerNode->translate(0.0, -2.0 * playerMove, 0.0);
-    }
-    if (playerNode->getPosition().y < -30) {
-        //Could take damage or reset game or something here...
-        playerNode->setPosition(Ogre::Vector3(-40.0f, 5.0f, 0.0f));
-    }
-
-    //Pickups
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("PickupEntity1")->getWorldBoundingBox()))
-    {
-        if (mSceneMgr->getEntity("PickupEntity1")->isVisible())
-        {
-            mSceneMgr->getEntity("PickupEntity1")->setVisible(false);
-            mPickups ++;
-        }
-    }
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("PickupEntity2")->getWorldBoundingBox()))
-    {
-        if (mSceneMgr->getEntity("PickupEntity2")->isVisible())
-        {
-            mSceneMgr->getEntity("PickupEntity2")->setVisible(false);
-            mPickups ++;
-        }
-    }
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("PickupEntity3")->getWorldBoundingBox()))
-    {
-        if (mSceneMgr->getEntity("PickupEntity3")->isVisible())
-        {
-            mSceneMgr->getEntity("PickupEntity3")->setVisible(false);
-            mPickups ++;
-        }
-    }
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("PickupEntity4")->getWorldBoundingBox()))
-    {
-        if (mSceneMgr->getEntity("PickupEntity4")->isVisible())
-        {
-            mSceneMgr->getEntity("PickupEntity4")->setVisible(false);
-            mPickups ++;
-        }
-    }
-
-    //Goal
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("Goal")->getWorldBoundingBox()))
-    {
-        if (mPickups == 4 && mPlayerWalkSpeed != 0)
-        {
-            mPlayerWalkSpeed = 0;
-            mEnemyWalkSpeed = 0;
-            mPickups = 10; //no reset
-        }
-    }
-
-    //Enemy
-    if(mSceneMgr->getEntity("Head")->
-            getWorldBoundingBox().intersects(mSceneMgr->getEntity("Enemy")->getWorldBoundingBox()))
-    {
-        //mSceneMgr->setAmbientLight(Ogre::ColourValue(0.9f, 0.1f, 0.1f));
-        mPlayerWalkSpeed = 0;
-        mEnemyWalkSpeed = 0;
-    }
 
     return OgreFramework::frameRenderingQueued(evt);
 }

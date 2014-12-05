@@ -7,6 +7,11 @@ class PlayerStatus
 {
 public:
     PlayerStatus();
+
+    int numHealth;
+
+    Ogre::SceneNode* healthNode;
+    Ogre::Entity* healthEnt;
 };
 
 #endif // PLAYERSTATUS_H

@@ -1,4 +1,5 @@
 #include "player.h"
+#include "playerstatus.h"
 
 Player::Player(Ogre::String giveName, Ogre::SceneManager *mgr)
 {
@@ -10,6 +11,9 @@ Player::Player(Ogre::String giveName, Ogre::SceneManager *mgr)
     mBack = false;
     mLeft = false;
     mRight = false;
+
+    lost = false;
+    won = false;
 
     name = giveName;
     sceneMgr = mgr;
@@ -29,11 +33,18 @@ Player::Player(Ogre::String giveName, Ogre::SceneManager *mgr)
     sightNode = mainNode->createChildSceneNode(name+"_sight", Ogre::Vector3(100,0,0));//(0,0,100));
     camNode = mainNode->createChildSceneNode(name+"_camera", Ogre::Vector3(-500,300,0));//(0,50,-100));
 
-    //node and antity for health
-    healthEnt = sceneMgr->createEntity(name+"_health", "knot.mesh");
-    healthNode = mainNode->createChildSceneNode("health", Ogre::Vector3(0,50,0));
-    healthNode->attachObject(healthEnt);
-    healthNode->scale(numHealth*.2f,numHealth*.2f,numHealth*.2f);
+    //legger til health-klasse
+    health = new PlayerStatus;
+
+    health->healthEnt = sceneMgr->createEntity(name+"_health", "knot.mesh");
+    health->healthNode = mainNode->createChildSceneNode("health", Ogre::Vector3(0,50,0));
+    health->healthNode->attachObject(health->healthEnt);
+    health->healthNode->scale(numHealth*.2f,numHealth*.2f,numHealth*.2f);
+}
+
+Player::~Player()
+{
+    delete health;
 }
 
 void Player::keyPress(const OIS::KeyEvent &arg)
@@ -42,8 +53,6 @@ void Player::keyPress(const OIS::KeyEvent &arg)
     if (arg.key == OIS::KC_DOWN) mBack = true;
     if (arg.key == OIS::KC_LEFT) mLeft = true;
     if (arg.key == OIS::KC_RIGHT) mRight = true;
-
-    if (arg.key == OIS::KC_H) recieveDamage(1);
 }
 
 void Player::keyRelease(const OIS::KeyEvent &arg)
@@ -57,22 +66,24 @@ void Player::keyRelease(const OIS::KeyEvent &arg)
 void Player::update(const Ogre::FrameEvent &evt)
 {
     Ogre::Real dTime = evt.timeSinceLastFrame;
+    if (!lost)
+    {
+        if (mForward)
+            mainNode->translate(Ogre::Vector3(0,0,-moveSpeed * dTime));
+        if (mBack)
+            mainNode->translate(Ogre::Vector3(0,0,moveSpeed * dTime));
+        if (mLeft)
+            mainNode->translate(Ogre::Vector3(-moveSpeed * dTime,0,0));
+        if (mRight)
+            mainNode->translate(Ogre::Vector3(moveSpeed * dTime,0,0));
 
-    if (mForward)
-        mainNode->translate(Ogre::Vector3(0,0,-moveSpeed * dTime));
-    if (mBack)
-        mainNode->translate(Ogre::Vector3(0,0,moveSpeed * dTime));
-    if (mBack)
-        mainNode->translate(Ogre::Vector3(-moveSpeed * dTime,0,0));
-    if (mBack)
-        mainNode->translate(Ogre::Vector3(moveSpeed * dTime,0,0));
-
-    if (mainNode->getPosition().z < -25)
-        mainNode->translate(0.0, -2.0 * moveSpeed * dTime, 0.0);
-    if (mainNode->getPosition().z > 25)
-        mainNode->translate(0.0, -2.0 * moveSpeed * dTime, 0.0);
-    if (mainNode->getPosition().y < -30)
-        mainNode->setPosition(Ogre::Vector3(-40.0f, 5.0f, 0.0f));
+        if (mainNode->getPosition().z < -25)
+            mainNode->translate(0.0, -2.0 * moveSpeed * dTime, 0.0);
+        if (mainNode->getPosition().z > 25)
+            mainNode->translate(0.0, -2.0 * moveSpeed * dTime, 0.0);
+        if (mainNode->getPosition().y < -30)
+            mainNode->setPosition(Ogre::Vector3(-40.0f, 5.0f, 0.0f));
+    }
 
     if(entity->getWorldBoundingBox().intersects
             (sceneMgr->getEntity("PickupEntity1")->getWorldBoundingBox()))
@@ -114,14 +125,25 @@ void Player::update(const Ogre::FrameEvent &evt)
     if(entity->getWorldBoundingBox().intersects
             (sceneMgr->getEntity("Goal")->getWorldBoundingBox()))
     {
-        if (numPickups == 4)
+        if (numPickups == 4 && !won)
         {
             mForward = false;
             mBack = false;
             mLeft = false;
             mRight = false;
             numPickups = 10; //no reset
+
+            Ogre::ParticleSystem* fireworks = sceneMgr->createParticleSystem("Fireworks", "Examples/Fireworks");
+            mainNode->attachObject(fireworks);
+            won = true;
         }
+    }
+
+    if(entity->getWorldBoundingBox().intersects
+            (sceneMgr->getEntity("shrek")->getWorldBoundingBox()))
+    {
+        recieveDamage(1);
+        mainNode->setPosition(Ogre::Vector3(-40.0f, 5.0f, 0.0f));
     }
 }
 
@@ -132,8 +154,9 @@ void Player::render(const Ogre::FrameEvent &evt)
 
 void Player::recieveDamage(int damage)
 {
+
     numHealth -= damage;
-    healthNode->scale(numHealth*.2f,numHealth*.2f,numHealth*.2f);
+    health->healthNode->scale(numHealth*.2f,numHealth*.2f,numHealth*.2f);
 
     if (numHealth < 0)
         died();
@@ -142,4 +165,5 @@ void Player::recieveDamage(int damage)
 void Player::died()
 {
     std::cout << "\nUFFDA";
+    lost = true;
 }
